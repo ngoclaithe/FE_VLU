@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import { getAllUsers, updateRoleUser, deleteUser } from "../../services/apiAuth";
+import { registerUser } from "../../services/apiAuth"; 
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -9,6 +10,10 @@ const UserManagerSection = () => {
     const [accessToken, setAccessToken] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [editedRole, setEditedRole] = useState("");
+
+    const [newEmail, setNewEmail] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [newRole, setNewRole] = useState("dean");
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
@@ -56,7 +61,6 @@ const UserManagerSection = () => {
                     pauseOnHover: true,
                     draggable: true,
                     progress: undefined,
-                    toastId: "error-toast",
                     zIndex: 100,
                 });
             })
@@ -70,7 +74,6 @@ const UserManagerSection = () => {
                     pauseOnHover: true,
                     draggable: true,
                     progress: undefined,
-                    toastId: "error-toast",
                     zIndex: 100,
                 });
             });
@@ -89,7 +92,6 @@ const UserManagerSection = () => {
                         pauseOnHover: true,
                         draggable: true,
                         progress: undefined,
-                        toastId: "error-toast",
                         zIndex: 100,
                     });
                 })
@@ -103,18 +105,92 @@ const UserManagerSection = () => {
                         pauseOnHover: true,
                         draggable: true,
                         progress: undefined,
-                        toastId: "error-toast",
                         zIndex: 100,
                     });
                 });
         }
     };
 
+    const handleRegister = async () => {
+        try {
+            await registerUser(newEmail, newPassword, newRole);
+            toast.success('Đăng ký tài khoản thành công!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                zIndex: 100,
+            });
+            setNewEmail("");
+            setNewPassword("");
+            setNewRole("dean");
+        } catch (err) {
+            console.error("Lỗi khi đăng ký tài khoản:", err);
+            toast.error("Không thể đăng ký tài khoản.", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                zIndex: 100,
+            });
+        }
+    };
+
     return (
-        <><ToastContainer />
+        <>
+            <ToastContainer />
             <div className="container mx-auto p-6">
                 <h1 className="text-2xl font-bold mb-4">Danh sách người dùng</h1>
                 {error && <div className="text-red-500 mb-4">{error}</div>}
+
+                <div className="mb-6 p-4 border rounded shadow-sm">
+                    <h2 className="text-lg font-semibold mb-2">Đăng ký tài khoản mới</h2>
+                    <div className="mb-2">
+                        <label className="block text-sm font-medium mb-1">Email:</label>
+                        <input
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Nhập email"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label className="block text-sm font-medium mb-1">Mật khẩu:</label>
+                        <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Nhập mật khẩu"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label className="block text-sm font-medium mb-1">Vai trò:</label>
+                        <select
+                            value={newRole}
+                            onChange={(e) => setNewRole(e.target.value)}
+                            className="w-full p-2 border rounded"
+                        >
+                            <option value="dean">Chủ nhiệm khoa</option>
+                            <option value="teacher">Giảng viên</option>
+                            <option value="secretary">Thư ký</option>
+                        </select>
+                    </div>
+                    <button
+                        onClick={handleRegister}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                        Đăng ký
+                    </button>
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="min-w-full table-auto border-collapse border border-gray-300">
                         <thead className="bg-gray-200">
@@ -175,7 +251,6 @@ const UserManagerSection = () => {
                 </div>
             </div>
         </>
-
     );
 };
 

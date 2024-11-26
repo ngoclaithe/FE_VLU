@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react"; 
-import { getAllUsers, updateRoleUser, deleteUser } from "../../services/apiAuth";
-import { registerUser } from "../../services/apiAuth"; 
+import React, { useEffect, useState } from "react";
+import { getAllUsers, updateRoleUser, deleteUser, registerUser } from "../../services/apiAuth";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,10 +9,10 @@ const UserManagerSection = () => {
     const [accessToken, setAccessToken] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [editedRole, setEditedRole] = useState("");
-
     const [newEmail, setNewEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState("dean");
+    const [showRegisterForm, setShowRegisterForm] = useState(false);
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
@@ -53,29 +52,11 @@ const UserManagerSection = () => {
                     )
                 );
                 setEditingUserId(null);
-                toast.success('Cập nhật vai trò thành công!', {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                    zIndex: 100,
-                });
+                toast.success('Cập nhật vai trò thành công!', { position: "top-right" });
             })
             .catch((err) => {
                 console.error("Lỗi khi cập nhật vai trò:", err);
-                toast.error("Không thể cập nhật vai trò.", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                    zIndex: 100,
-                });
+                toast.error("Không thể cập nhật vai trò.", { position: "top-right" });
             });
     };
 
@@ -84,29 +65,11 @@ const UserManagerSection = () => {
             deleteUser(accessToken, userId)
                 .then(() => {
                     setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-                    toast.success('Xóa người dùng thành công!', {
-                        position: "top-right",
-                        autoClose: 3000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                        zIndex: 100,
-                    });
+                    toast.success('Xóa người dùng thành công!', { position: "top-right" });
                 })
                 .catch((err) => {
                     console.error("Lỗi khi xóa người dùng:", err);
-                    toast.error('Không thể xóa người dùng.', {
-                        position: "top-right",
-                        autoClose: 3000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                        zIndex: 100,
-                    });
+                    toast.error('Không thể xóa người dùng.', { position: "top-right" });
                 });
         }
     };
@@ -114,31 +77,14 @@ const UserManagerSection = () => {
     const handleRegister = async () => {
         try {
             await registerUser(newEmail, newPassword, newRole);
-            toast.success('Đăng ký tài khoản thành công!', {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                zIndex: 100,
-            });
+            toast.success('Đăng ký tài khoản thành công!', { position: "top-right" });
             setNewEmail("");
             setNewPassword("");
             setNewRole("dean");
+            setShowRegisterForm(false);
         } catch (err) {
             console.error("Lỗi khi đăng ký tài khoản:", err);
-            toast.error("Không thể đăng ký tài khoản.", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                zIndex: 100,
-            });
+            toast.error("Không thể đăng ký tài khoản.", { position: "top-right" });
         }
     };
 
@@ -149,48 +95,70 @@ const UserManagerSection = () => {
                 <h1 className="text-2xl font-bold mb-4">Danh sách người dùng</h1>
                 {error && <div className="text-red-500 mb-4">{error}</div>}
 
-                <div className="mb-6 p-4 border rounded shadow-sm">
-                    <h2 className="text-lg font-semibold mb-2">Đăng ký tài khoản mới</h2>
-                    <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Email:</label>
-                        <input
-                            type="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            className="w-full p-2 border rounded"
-                            placeholder="Nhập email"
-                        />
-                    </div>
-                    <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Mật khẩu:</label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-2 border rounded"
-                            placeholder="Nhập mật khẩu"
-                        />
-                    </div>
-                    <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Vai trò:</label>
-                        <select
-                            value={newRole}
-                            onChange={(e) => setNewRole(e.target.value)}
-                            className="w-full p-2 border rounded"
-                        >
-                            <option value="dean">Chủ nhiệm khoa</option>
-                            <option value="teacher">Giảng viên</option>
-                            <option value="secretary">Thư ký</option>
-                        </select>
-                    </div>
-                    <button
-                        onClick={handleRegister}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    >
-                        Đăng ký
-                    </button>
-                </div>
+                {/* Nút mở modal */}
+                <button
+                    onClick={() => setShowRegisterForm(true)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-6"
+                >
+                    Thêm người dùng mới
+                </button>
 
+                {/* Modal hiển thị form đăng ký */}
+                {showRegisterForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                        <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
+                            <h2 className="text-lg font-semibold mb-4">Đăng ký tài khoản mới</h2>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Email:</label>
+                                <input
+                                    type="email"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Nhập email"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Mật khẩu:</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Nhập mật khẩu"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Vai trò:</label>
+                                <select
+                                    value={newRole}
+                                    onChange={(e) => setNewRole(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                >
+                                    <option value="dean">Chủ nhiệm khoa</option>
+                                    <option value="teacher">Giảng viên</option>
+                                    <option value="secretary">Thư ký</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end space-x-4">
+                                <button
+                                    onClick={handleRegister}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                >
+                                    Đăng ký
+                                </button>
+                                <button
+                                    onClick={() => setShowRegisterForm(false)}
+                                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                                >
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bảng danh sách người dùng */}
                 <div className="overflow-x-auto">
                     <table className="min-w-full table-auto border-collapse border border-gray-300">
                         <thead className="bg-gray-200">

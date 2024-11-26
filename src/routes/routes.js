@@ -12,26 +12,25 @@ import ShiftPageTeacher from '../pages/teacher/ShiftPage';
 import InfoPageTeacher from '../pages/teacher/InfoPage';
 import AttendancePageTeacher from '../pages/teacher/Attendance';
 
-const PrivateRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('token');
-  
+const PrivateRoute = ({ children, allowedRoles }) => {
+  const isAuthenticated = sessionStorage.getItem('token');
+  const role = sessionStorage.getItem('role');
+
+  console.log("Authentication status:", isAuthenticated);
+  console.log("User role:", role);
+
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
-  const role = localStorage.getItem('role');  
-  console.log("Gia tri role hiện tại trong route", role);
-
-  if (role === 'dean') {
-    return children; 
+  if (allowedRoles.includes(role)) {
+    return children;
   }
 
-  if (role === 'teacher') {
-    return <Navigate to="/dashboard-teacher" replace />; 
-  }
-
-  return <Navigate to="/" replace />; 
+  return <Navigate to="/" replace />;
 };
+
+
 
 export const routes = [
   {
@@ -41,7 +40,7 @@ export const routes = [
   {
     path: '/dashboard',
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['dean']}>
         <Dashboard />
       </PrivateRoute>
     ),
@@ -49,7 +48,7 @@ export const routes = [
   {
     path: '/schedule', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['dean']}>
         <ShiftPage />
       </PrivateRoute>
     ),
@@ -57,7 +56,7 @@ export const routes = [
   {
     path: '/statistics', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['dean']}>
         <StatisticalPage />
       </PrivateRoute>
     ),
@@ -65,7 +64,7 @@ export const routes = [
   {
     path: '/requests', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['dean']}>
         <RequestTeacherPage />
       </PrivateRoute>
     ),
@@ -73,7 +72,7 @@ export const routes = [
   {
     path: '/users', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['dean']}>
         <UserManagerPage />
       </PrivateRoute>
     ),
@@ -82,7 +81,7 @@ export const routes = [
   {
     path: '/dashboard-teacher', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['teacher']}>
         <DashboardTeacher />
       </PrivateRoute>
     ),
@@ -90,7 +89,7 @@ export const routes = [
   {
     path: '/schedule-teacher', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['teacher']}>
         <ShiftPageTeacher />
       </PrivateRoute>
     ),
@@ -98,7 +97,7 @@ export const routes = [
   {
     path: '/teacher-info', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['teacher']}>
         <InfoPageTeacher />
       </PrivateRoute>
     ),
@@ -107,7 +106,7 @@ export const routes = [
   {
     path: '/attendance-teacher', 
     element: (
-      <PrivateRoute>
+      <PrivateRoute allowedRoles={['teacher']}>
         <AttendancePageTeacher />
       </PrivateRoute>
     ),

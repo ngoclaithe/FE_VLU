@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getShiftsByMonth, createShift, updateShift, deleteShift } from '../../services/apiShift';
+import { getShiftsByMonthForDean, createShift, updateShiftShowTeacher, deleteShift } from '../../services/apiShift';
 import InfoSchedule from '../../components/modal/InfoSchedule';
 
 const ShiftModal = ({ isOpen, onClose, onSelect, day }) => {
@@ -98,7 +98,23 @@ const ShiftList = () => {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedDescription, setSelectedDescription] = useState("");
-
+  const [showTeacher, setShowTeacher] = useState(false);
+  
+  const handleTeacherVisibilityToggle = () => {
+    const newShowTeacherValue = !showTeacher;
+    setShowTeacher(newShowTeacherValue);
+    
+    updateShiftShowTeacher(
+      selectedYear, 
+      selectedMonth + 1, 
+      newShowTeacherValue ? "true" : "false"
+    ).then(() => {
+      console.log(`Trạng thái hiển thị giảng viên: ${newShowTeacherValue}`);
+    }).catch((error) => {
+      console.error("Không thể cập nhật trạng thái hiển thị", error);
+      setShowTeacher(!newShowTeacherValue);
+    });
+  };
   const months = [
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
     'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
@@ -108,7 +124,7 @@ const ShiftList = () => {
     const days = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     setDaysInMonth(days);
 
-    getShiftsByMonth(selectedYear, selectedMonth + 1).then((data) => {
+    getShiftsByMonthForDean(selectedYear, selectedMonth + 1).then((data) => {
       const groupedShifts = data.reduce((acc, shift) => {
         const day = new Date(shift.date).getDate();
         if (!acc[day]) acc[day] = [];
@@ -149,7 +165,7 @@ const ShiftList = () => {
       // });
       // setShiftModalOpen(false);
       // window.location.reload();
-      getShiftsByMonth(selectedYear, selectedMonth + 1).then((data) => {
+      getShiftsByMonthForDean(selectedYear, selectedMonth + 1).then((data) => {
         const groupedShifts = data.reduce((acc, shift) => {
           const day = new Date(shift.date).getDate();
           if (!acc[day]) acc[day] = [];
@@ -199,24 +215,39 @@ const ShiftList = () => {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách ca trực</h1>
 
       <div className="flex justify-between items-center mb-6">
-        <select
-          className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-        >
-          {months.map((month, index) => (
-            <option key={index} value={index}>{month}</option>
-          ))}
-        </select>
-        <select
-          className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm ml-4"
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-        >
-          {years.map((year) => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
+        <div className="flex items-center space-x-4">
+          <select
+            className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          >
+            {months.map((month, index) => (
+              <option key={index} value={index}>{month}</option>
+            ))}
+          </select>
+          <select
+            className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          >
+            {years.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Ẩn/Hiện Ca Trực Cho Giảng Viên</span>
+          <div
+            className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer 
+              ${showTeacher ? 'bg-green-500' : 'bg-red-500'}`}
+            onClick={handleTeacherVisibilityToggle}
+          >
+            <div 
+              className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 
+                          ${showTeacher ? 'translate-x-6' : ''}`}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

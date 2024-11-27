@@ -46,7 +46,15 @@ export const getShiftsByMonth = async (year, month) => {
         throw error;
     }
 };
-
+export const getShiftsByMonthForDean = async (year, month) => {
+    try {
+        const response = await apiClient.get(`shifts/month-for-dean/${year}/${month}`);
+        return response.data;
+    } catch (error) {
+        console.error("Get Shifts By Month For Dean Error:", error.response?.data || error.message);
+        throw error;
+    }
+};
 export const createShift = async (shiftData) => {
     try {
         const response = await apiClient.post('shifts/', shiftData);
@@ -63,6 +71,16 @@ export const updateShift = async (shiftId, shiftData) => {
         return response.data;
     } catch (error) {
         console.error("Update Shift Error:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const updateShiftShowTeacher = async (year, month, show_teacher) => {
+    try {
+        const response = await apiClient.put(`shifts/update_show_teacher/${year}/${month}/${show_teacher}`);
+        return response.data;
+    } catch (error) {
+        console.error("Update Shift Show Teacher Error:", error.response?.data || error.message);
         throw error;
     }
 };

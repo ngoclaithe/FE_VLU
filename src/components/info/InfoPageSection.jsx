@@ -79,7 +79,7 @@ const InfoPageSection = () => {
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md">
-            <h1 className="text-2xl font-bold text-center mb-6">Thông tin giáo viên</h1>
+            <h1 className="text-2xl font-bold text-center mb-6">Thông tin giảng viên</h1>
             <div className="flex items-center mb-6">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                     {imageSrc ? (
@@ -100,6 +100,7 @@ const InfoPageSection = () => {
                             <p className="text-lg font-semibold">{teacherData.name}</p>
                             <p className="text-gray-700">Bộ môn: {teacherData.subject}</p>
                             <p className="text-gray-700">Số điện thoại: {teacherData.phone}</p>
+                            <p className="text-gray-700">Mã CBGV {teacherData.teacher_code}</p>
                         </>
                     ) : (
                         <div className="space-y-4">
@@ -126,6 +127,14 @@ const InfoPageSection = () => {
                                 onChange={handleInputChange}
                                 className="w-full p-2 border border-gray-300 rounded-md"
                                 placeholder="Số điện thoại"
+                            />
+                            <input
+                                type="text"
+                                name="teacher_code"
+                                value={updatedData.teacher_code}
+                                onChange={handleInputChange}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                placeholder="Mã CBGV"
                             />
                         </div>
                     )}

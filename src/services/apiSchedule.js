@@ -95,3 +95,18 @@ export const getSchedulesTodayByTeacherId = async (teacher_id) => {
         throw error;
     }
 };
+
+export const updateExcel = async (file) => {
+    try {
+        const response = await apiClient.post('/schedules/secretary_upload_schedule', file, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Chi tiết lỗi:', error.response ? error.response.data : error);
+        throw error;
+    }
+};

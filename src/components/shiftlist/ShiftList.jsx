@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getShiftsByMonth, createShift, updateShift, deleteShift } from '../../services/apiShift';
-import { getSchedulesByDate } from '../../services/apiSchedule';
 import InfoSchedule from '../../components/modal/InfoSchedule';
 
 const ShiftModal = ({ isOpen, onClose, onSelect, day }) => {
@@ -94,7 +93,7 @@ const ShiftList = () => {
   const [shifts, setShifts] = useState([]);
   const [daysInMonth, setDaysInMonth] = useState(30);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -104,13 +103,12 @@ const ShiftList = () => {
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
     'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
   ];
-
+  const years = Array.from({ length: 11 }, (_, index) => new Date().getFullYear() - 5 + index);
   useEffect(() => {
-    const year = selectedDate.getFullYear();
-    const days = new Date(year, selectedMonth + 1, 0).getDate();
+    const days = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     setDaysInMonth(days);
 
-    getShiftsByMonth(year, selectedMonth + 1).then((data) => {
+    getShiftsByMonth(selectedYear, selectedMonth + 1).then((data) => {
       const groupedShifts = data.reduce((acc, shift) => {
         const day = new Date(shift.date).getDate();
         if (!acc[day]) acc[day] = [];
@@ -119,7 +117,7 @@ const ShiftList = () => {
       }, {});
       setShifts(groupedShifts);
     });
-  }, [selectedMonth, selectedDate]);
+  }, [selectedMonth, selectedYear]);
 
   const handleCreateShift = (day) => {
     setSelectedDay(day);
@@ -127,9 +125,8 @@ const ShiftList = () => {
   };
 
   const handleShiftSelect = (day, description) => {
-    const year = selectedDate.getFullYear();
     const month = selectedMonth + 1;
-    const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const formattedDate = `${selectedYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 
     if (
       shifts[day] &&
@@ -202,15 +199,23 @@ const ShiftList = () => {
             <option key={index} value={index}>{month}</option>
           ))}
         </select>
+        <select
+          className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm ml-4"
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+        >
+          {years.map((year) => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {[...Array(daysInMonth)].map((_, index) => {
           const day = index + 1;
           const shiftData = shifts[day] || [];
-          const year = selectedDate.getFullYear();
-          const month = (selectedMonth + 1).toString().padStart(2, "0");
-          const fullDate = `${year}-${month}-${day.toString().padStart(2, "0")}`;
+          const fullDate = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
 
           return (
             <ShiftCard

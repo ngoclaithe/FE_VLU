@@ -44,11 +44,6 @@ export const Header = ({ toggleSidebar }) => {
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100"
             >
-              {/* <img
-                src="/api/placeholder/32/32"
-                alt="Avatar"
-                className="w-8 h-8 rounded-full"
-              /> */}
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-gray-700">{userInfo.email}</p>
                 <p className="text-xs text-gray-500">{userInfo.role}</p>
@@ -57,10 +52,6 @@ export const Header = ({ toggleSidebar }) => {
 
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
-                <a href="/profile" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
-                  <User size={16} className="mr-2" />
-                  Thông tin cá nhân
-                </a>
                 <a href="/logout" className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
                   <LogOut size={16} className="mr-2" />
                   Đăng xuất

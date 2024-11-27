@@ -1,25 +1,34 @@
 import { Home, BarChart, FileText, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Sidebar = ({ isOpen, role }) => {
-
   const deanMenuItems = [
     { icon: Home, label: 'Trang chủ', path: '/dashboard' },
     { icon: FileText, label: 'Quản lý lịch trực', path: '/schedule' },
     { icon: FileText, label: 'Danh sách yêu cầu', path: '/requests' },
     { icon: BarChart, label: 'Thống kê', path: '/statistics' },
-    // { icon: FileText, label: 'Lịch sử', path: '/history' },
     { icon: Users, label: 'Người dùng', path: '/users' },
   ];
 
+  const secretaryMenuItems = [
+    { icon: Home, label: 'Trang chủ', path: '/dashboard' },
+    { icon: FileText, label: 'Quản lý lịch trực', path: '/schedule' },
+    { icon: FileText, label: 'Danh sách yêu cầu', path: '/requests' },
+  ];
 
   const teacherMenuItems = [
-    { icon: Home, label: 'Trang chủ', path: '/dashboard-teacher' },
+    { icon: Home, label: 'Trang chủ', path: '/dashboard' },
     { icon: FileText, label: 'Lịch trực', path: '/schedule-teacher' },
     { icon: FileText, label: 'Checkin/Checkout', path: '/attendance-teacher' },
     { icon: FileText, label: 'Thông tin cá nhân', path: '/teacher-info' },
   ];
 
-  const menuItems = role === 'dean' ? deanMenuItems : teacherMenuItems;
+  const menuItems =
+    role === 'dean'
+      ? deanMenuItems
+      : role === 'secretary'
+      ? secretaryMenuItems
+      : teacherMenuItems;
 
   return (
     <div
@@ -29,18 +38,18 @@ export const Sidebar = ({ isOpen, role }) => {
       <div className="flex flex-col h-full">
         <nav className="flex-1 px-4 py-6">
           {menuItems.map((item, index) => (
-            <a
+            <Link
               key={index}
-              href={item.path}
+              to={item.path} 
               className="flex items-center space-x-3 px-4 py-3 rounded-lg mb-1 transition-colors
                 hover:bg-gray-800 text-gray-300 hover:text-white"
             >
               <item.icon size={20} />
               <span className="font-medium">{item.label}</span>
-            </a>
+            </Link>
           ))}
         </nav>
       </div>
     </div>
   );
-}
+};

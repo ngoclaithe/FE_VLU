@@ -21,15 +21,19 @@ const LoginPage = () => {
       sessionStorage.setItem('email', userInfo.email); 
       sessionStorage.setItem('role', userInfo.role); 
 
-      if (userInfo.role === 'dean') {
+      if (userInfo.role === 'dean' || userInfo.role === 'secretary' || userInfo.role === 'teacher') {
         console.log('Navigating to /dashboard');
         navigate('/dashboard');  
-      } else if (userInfo.role === 'teacher') {
-        console.log('Navigating to /dashboard-teacher');
-        navigate('/dashboard-teacher');  
-      } else {
+      } 
+      // else if (userInfo.role === 'teacher') {
+      //   console.log('Navigating to /dashboard-teacher');
+      //   navigate('/dashboard-teacher');  
+      // } 
+      else {
         setError('Bạn không có quyền truy cập trang này.');
         sessionStorage.removeItem('token'); 
+        sessionStorage.removeItem('role');
+        sessionStorage.removeItem('email');
       }
     } catch (err) {
       setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');

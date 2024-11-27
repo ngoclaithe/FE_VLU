@@ -98,7 +98,7 @@ const InfoPageSection = () => {
                     {!isEditing ? (
                         <>
                             <p className="text-lg font-semibold">{teacherData.name}</p>
-                            <p className="text-gray-700">Môn học: {teacherData.subject}</p>
+                            <p className="text-gray-700">Bộ môn: {teacherData.subject}</p>
                             <p className="text-gray-700">Số điện thoại: {teacherData.phone}</p>
                         </>
                     ) : (

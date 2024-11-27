@@ -148,7 +148,7 @@ const ShiftList = () => {
         return updatedShifts;
       });
       setShiftModalOpen(false);
-      window.location.reload();
+      // window.location.reload();
     });
   };
 

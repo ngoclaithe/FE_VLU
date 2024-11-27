@@ -141,14 +141,23 @@ const ShiftList = () => {
       date: formattedDate,
       description: description
     }).then((newShift) => {
-      setShifts((prevShifts) => {
-        const updatedShifts = { ...prevShifts };
-        if (!updatedShifts[day]) updatedShifts[day] = [];
-        updatedShifts[day].push(newShift);
-        return updatedShifts;
-      });
-      setShiftModalOpen(false);
+      // setShifts((prevShifts) => {
+      //   const updatedShifts = { ...prevShifts };
+      //   if (!updatedShifts[day]) updatedShifts[day] = [];
+      //   updatedShifts[day].push(newShift);
+      //   return updatedShifts;
+      // });
+      // setShiftModalOpen(false);
       // window.location.reload();
+      getShiftsByMonth(selectedYear, selectedMonth + 1).then((data) => {
+        const groupedShifts = data.reduce((acc, shift) => {
+          const day = new Date(shift.date).getDate();
+          if (!acc[day]) acc[day] = [];
+          acc[day].push(shift);
+          return acc;
+        }, {});
+        setShifts(groupedShifts);
+      });
     });
   };
 

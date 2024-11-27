@@ -7,8 +7,8 @@ import {
 } from '../../services/apiSchedule';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { confirmAlert } from 'react-confirm-alert'; // Import thư viện
-import 'react-confirm-alert/src/react-confirm-alert.css'; // Import style
+import { confirmAlert } from 'react-confirm-alert'; 
+import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
 const ShiftListTeacher = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -49,9 +49,6 @@ const ShiftListTeacher = () => {
                 toastId: "error-toast",
                 zIndex: 100,
               });
-              setTimeout(() => {
-                window.location.reload();
-              }, 2000);
             }).catch(error => {
               toast.error('Lỗi khi thao tác ca:', error, {
                 position: "top-right",

@@ -10,8 +10,6 @@ export const Header = ({ toggleSidebar }) => {
     const email = sessionStorage.getItem('email');
     const role = sessionStorage.getItem('role');
     setUserInfo({ email, role });
-    console.log("Gia tri email trong header",email);
-    console.log("Gia tri role trong header",role);
   }, []);
 
   return (
@@ -28,8 +26,9 @@ export const Header = ({ toggleSidebar }) => {
             <img
               src={logo}
               alt="Logo"
-              className="h-8 w-8 rounded"
+              className="h-16 w-16 rounded"
             />
+            <span className="text-2xl font-bold text-red-500 ml-4">ĐẠI HỌC VĂN LANG</span>
           </div>
         </div>
 

@@ -55,7 +55,7 @@ const ShiftCard = ({ day, shifts, fullDate, onRightClick }) => {
               <p className="text-sm text-gray-600 truncate">
                 Ca trực: {descriptionToTime[shift.description] || "Không có thông tin"}
                 {isRegistered && (
-                  <span className="font-bold italic text-red-600"> (Đã đăng ký)</span>
+                  <span className="font-bold italic text-red-600"> (Đã gửi yêu cầu)</span>
                 )}
               </p>
             </div>

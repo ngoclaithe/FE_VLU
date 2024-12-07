@@ -1,11 +1,11 @@
-import { Home, BarChart, FileText, Users } from 'lucide-react';
+import { Home, BarChart, FileText, Users, CheckSquare, User, Clipboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Sidebar = ({ isOpen, role }) => {
   const deanMenuItems = [
     { icon: Home, label: 'Trang chủ', path: '/dashboard' },
     { icon: FileText, label: 'Quản lý lịch trực', path: '/schedule' },
-    { icon: FileText, label: 'Danh sách yêu cầu', path: '/requests' },
+    { icon: CheckSquare, label: 'Danh sách yêu cầu', path: '/requests' },
     { icon: BarChart, label: 'Thống kê', path: '/statistics' },
     { icon: Users, label: 'Người dùng', path: '/users' },
   ];
@@ -13,14 +13,15 @@ export const Sidebar = ({ isOpen, role }) => {
   const secretaryMenuItems = [
     { icon: Home, label: 'Trang chủ', path: '/dashboard' },
     { icon: FileText, label: 'Quản lý lịch trực', path: '/schedule' },
-    { icon: FileText, label: 'Danh sách yêu cầu', path: '/requests' },
+    { icon: CheckSquare, label: 'Danh sách yêu cầu', path: '/requests' },
   ];
 
   const teacherMenuItems = [
     { icon: Home, label: 'Trang chủ', path: '/dashboard' },
-    { icon: FileText, label: 'Lịch trực', path: '/schedule-teacher' },
-    { icon: FileText, label: 'Checkin/Checkout', path: '/attendance-teacher' },
-    { icon: FileText, label: 'Thông tin cá nhân', path: '/teacher-info' },
+    { icon: Clipboard, label: 'Lịch trực', path: '/schedule-teacher' },
+    { icon: CheckSquare, label: 'Checkin/Checkout', path: '/attendance-teacher' },
+    { icon: FileText, label: 'Kiểm tra điểm danh', path: '/teacher-history' },
+    { icon: User, label: 'Thông tin cá nhân', path: '/teacher-info' },
   ];
 
   const menuItems =

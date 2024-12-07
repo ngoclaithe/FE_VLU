@@ -25,6 +25,7 @@ const RequestTeacherSection = () => {
       setLoading(false);
     }
   };
+
   const handleApprove = async (scheduleId, shift) => { 
     try {
       if (!shift.teachers || shift.teachers.length === 0) {
@@ -33,12 +34,13 @@ const RequestTeacherSection = () => {
       }
   
       const teacher_id = shift.teachers[0].teacher_id;
-  
+      const note = shift.teachers[0].note === "waiting" ? "success" : shift.teachers[0].note === "leave_of_absence" ? "leave_approval" : "success";
+
       const scheduleData = { 
         teacher_id: teacher_id, 
         description: shift.description, 
         date: shift.date,              
-        note: "success"               
+        note: note               
       };
     
       const response = await updateSchedule(scheduleId, scheduleData);
@@ -108,6 +110,7 @@ const RequestTeacherSection = () => {
                 <th className="border p-2">Giáo viên</th>
                 <th className="border p-2">Bộ môn</th>
                 <th className="border p-2">Số điện thoại</th>
+                <th className="border p-2">Yêu cầu</th>
                 <th className="border p-2">Hành động</th> 
               </tr>
             </thead>
@@ -155,6 +158,18 @@ const RequestTeacherSection = () => {
                       ))
                     ) : (
                       <div className="text-red-600">Chưa có số điện thoại</div>
+                    )}
+                  </td>
+                  <td className="border p-2 text-center">
+                    {shift.teachers.length > 0 ? (
+                      shift.teachers.map((teacher, idx) => (
+                        <div key={idx} className="mb-2">
+                          {teacher.note === "leave_of_absence" ? "Giáo viên xin nghỉ" : 
+                           teacher.note === "waiting" ? "Giáo viên xin đổi ca" : ""}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-red-600">Không có yêu cầu</div>
                     )}
                   </td>
                   <td className="border p-2 text-center">

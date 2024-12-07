@@ -55,12 +55,16 @@ export const useTeacherShifts = (selectedMonth, selectedDate) => {
       const updatedShifts = { ...groupedShifts };
       for (let day in groupedSchedules) {
         if (updatedShifts[day]) {
-          updatedShifts[day] = updatedShifts[day].map(shift => ({
-            ...shift,
-            registered: groupedSchedules[day].some(
+          updatedShifts[day] = updatedShifts[day].map(shift => {
+            const matchingSchedule = groupedSchedules[day].find(
               schedule => schedule.description === shift.description
-            ),
-          }));
+            );
+            return {
+              ...shift,
+              registered: !!matchingSchedule,
+              note: matchingSchedule ? matchingSchedule.note : null
+            };
+          });
         }
       }
 

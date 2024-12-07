@@ -80,3 +80,12 @@ export const getStatistical = async (date) => {
         throw error;
     }
 };
+export const getAttendanceByTeacher = async (teacherId) => {
+    try {
+        const response = await apiClient.get(`/attendance/get-attendance-by-teacher/${teacherId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Vấn đề chi tiết:', error.response?.data?.detail || error.message);
+        throw error;
+    }
+};

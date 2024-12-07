@@ -55,6 +55,7 @@ const StatisticalSection = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-4">Thống kê giảng viên trực</h2>
       <div className="flex items-center space-x-4 mb-6">
         <input 
           type="date" 

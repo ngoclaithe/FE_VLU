@@ -4,9 +4,9 @@ import InfoSchedule from '../../components/modal/InfoSchedule';
 
 const ShiftModal = ({ isOpen, onClose, onSelect, day }) => {
   const shifts = [
-    { id: "1", time: "18:00-19:30", description: "1" },
-    { id: "2", time: "19:30-21:00", description: "2" },
-    { id: "3", time: "21:00-22:30", description: "3" },
+    { id: "1", time: "07:00-11:30", description: "1" },
+    { id: "2", time: "13:30-17:00", description: "2" },
+    { id: "3", time: "18:00-20:30", description: "3" },
   ];
 
   if (!isOpen) return null;
@@ -44,9 +44,9 @@ const ShiftModal = ({ isOpen, onClose, onSelect, day }) => {
 
 const ShiftCard = ({ day, shifts, onCreate, onDelete, onShowSchedule, fullDate }) => {
   const descriptionToTime = {
-    "1": "18:00-19:30",
-    "2": "19:30-21:00",
-    "3": "21:00-22:30",
+    "1": "07:00-11:30",
+    "2": "13:30-17:00",
+    "3": "18:00-20:30",
   };
 
   return (

@@ -55,7 +55,7 @@ export const teacherRegisterSchedule = async (teacherId, description, date) => {
             teacher_id: teacherId, 
             description: description, 
             date: date, 
-            note: "waiting"
+            note: "success"
         };
 
         const response = await apiClient.post('/schedules/teacher_register_schedule', scheduleData);
@@ -85,7 +85,22 @@ export const deleteSchedule = async (teacherId, description, date) => {
         throw error;
     }
 };
-
+export const changeSchedule = async (teacherId, descriptionold, dateold, descriptionnew, datenew) => {
+    try {
+        await apiClient.put(`/schedules/change_by_teacher/${teacherId}/${descriptionold}/${dateold}/${descriptionnew}/${datenew}/`);
+    } catch (error) {
+        console.error('Error deleting schedule:', error);
+        throw error;
+    }
+};
+export const leaveSchedule = async (teacherId, description, date) => {
+    try {
+        await apiClient.put(`/schedules/leave_by_teacher/${teacherId}/${description}/${date}`);
+    } catch (error) {
+        console.error('Error deleting schedule:', error);
+        throw error;
+    }
+};
 export const getSchedulesTodayByTeacherId = async (teacher_id) => {
     try {
         const response = await apiClient.get(`/schedules/today/${teacher_id}`);

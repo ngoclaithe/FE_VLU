@@ -10,6 +10,7 @@ import RequestTeacherPage from '../pages/dean/RequestTeacherPage';
 import ShiftPageTeacher from '../pages/teacher/ShiftPage';
 import InfoPageTeacher from '../pages/teacher/InfoPage';
 import AttendancePageTeacher from '../pages/teacher/Attendance';
+import HistoryPageTeacher from '../pages/teacher/HistoryPage';
 import PrivateRoute from './PrivateRoute'; 
 const handleLogout = () => {
   sessionStorage.removeItem('token');
@@ -67,6 +68,14 @@ export const routes = [
     element: (
       <PrivateRoute allowedRoles={['teacher']}>
         <ShiftPageTeacher />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: '/teacher-history', 
+    element: (
+      <PrivateRoute allowedRoles={['teacher']}>
+        <HistoryPageTeacher />
       </PrivateRoute>
     ),
   },

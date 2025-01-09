@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, getUserInfo } from '../../services/apiAuth';  
+import vluLogo from '../../assets/vlu_logo.png'; 
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const LoginPage = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="flex justify-center">
           <img
-            src="../../assets/vlu_logo.png" 
+            src={vluLogo} 
             alt="Logo"
             className="h-24 w-auto" 
           />

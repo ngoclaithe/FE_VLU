@@ -1,89 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { getShiftsByMonthForDean, createShift, updateShiftShowTeacher, deleteShift } from '../../services/apiShift';
+import { getShiftsByMonthForDean, updateShiftShowTeacher } from '../../services/apiShift';
+import {
+  getListSemester,
+  secretaryCreateSemesterShift,
+  secretaryUpdateSemesterShift,
+  secretaryDeleteSemesterShift,
+  deanUpdateSemesterApprove,
+  deanUpdateSemesterApproveNotTeacher,
+  deanUpdateSemesterRefuse
+} from '../../services/apiSemester';
 import InfoSchedule from '../../components/modal/InfoSchedule';
+import CreateShiftModal from './CreateShiftModal';
+import UpdateSemesterModal from './UpdateSemesterModal';
 
-const ShiftModal = ({ isOpen, onClose, onSelect, day }) => {
-  const shifts = [
-    { id: "1", time: "07:00-11:30", description: "1" },
-    { id: "2", time: "13:30-17:00", description: "2" },
-    { id: "3", time: "18:00-20:30", description: "3" },
-  ];
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-800 mb-4">
-          Chọn ca trực cho ngày {day}
-        </h2>
-        <div className="space-y-3">
-          {shifts.map((shift) => (
-            <button
-              key={shift.id}
-              onClick={() => {
-                onSelect(day, shift.description);
-                onClose();
-              }}
-              className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 text-left py-2 px-4 rounded-md"
-            >
-              {shift.time}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={onClose}
-          className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md"
-        >
-          Đóng
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const ShiftCard = ({ day, shifts, onCreate, onDelete, onShowSchedule, fullDate }) => {
-  const descriptionToTime = {
-    "1": "07:00-11:30",
-    "2": "13:30-17:00",
-    "3": "18:00-20:30",
+const ShiftCard = ({ day, shifts, onShowSchedule, fullDate }) => {
+  const [hoveredShift, setHoveredShift] = useState(null);
+  const getShiftColor = (description) => {
+    switch (description) {
+      case "1":
+        return "bg-blue-100";
+      case "2":
+        return "bg-red-100";
+      default:
+        return "bg-gray-100";
+    }
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 border border-gray-200 h-full flex flex-col">
+    <div
+      className="bg-white shadow-lg rounded-lg p-4 border border-gray-200 flex flex-col relative min-h-[200px] hover:bg-gray-50 transition-all duration-300"
+    >
       <h3 className="text-lg font-semibold text-gray-700 mb-4">{`Ngày ${day}`}</h3>
 
-      <div className="flex-grow space-y-3">
+      <div className="flex-grow space-y-3 overflow-hidden">
         {shifts.map((shift) => (
-          <div key={shift.id} className="mb-3">
-            <p className="text-sm text-gray-600">{`Ca trực: ${descriptionToTime[shift.description] || "Không có thông tin"}`}</p>
-            <div className="flex justify-between mt-2">
-              <button
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                onClick={() => onShowSchedule(fullDate, shift.description)}
-              >
-                Hiển thị người trực
-              </button>
-              <button
-                className="text-red-600 hover:text-red-700 text-sm font-medium"
-                onClick={() => onDelete(shift.id)}
-              >
-                Xóa Ca
-              </button>
-            </div>
-          </div>
+          <div
+            key={shift.id}
+            className={`mb-3 p-3 rounded-lg cursor-pointer ${getShiftColor(shift.description)} h-12 flex items-center justify-center ${hoveredShift === shift?.id ? 'bg-opacity-75' : ''}`}
+            onMouseEnter={() => shift && setHoveredShift(shift.id)}
+            onMouseLeave={() => setHoveredShift(null)}
+            onClick={() => onShowSchedule(fullDate, shift.description)}
+          />
         ))}
-      </div>
-
-      <div className="mt-auto pt-4">
-        {shifts.length < 3 && (
-          <button
-            className="bg-green-500 hover:bg-green-600 text-white w-full py-2 px-4 rounded-md"
-            onClick={() => onCreate(day)}
-          >
-            Thêm ca trực
-          </button>
-        )}
       </div>
     </div>
   );
@@ -94,77 +52,100 @@ const ShiftList = () => {
   const [daysInMonth, setDaysInMonth] = useState(30);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedDescription, setSelectedDescription] = useState("");
   const [showTeacher, setShowTeacher] = useState(false);
-  
-  const handleTeacherVisibilityToggle = () => {
-    const newShowTeacherValue = !showTeacher;
-    setShowTeacher(newShowTeacherValue);
-    
-    updateShiftShowTeacher(
-      selectedYear, 
-      selectedMonth + 1, 
-      newShowTeacherValue ? "true" : "false"
-    ).then(() => {
-      console.log(`Trạng thái hiển thị giảng viên: ${newShowTeacherValue}`);
-    }).catch((error) => {
-      console.error("Không thể cập nhật trạng thái hiển thị", error);
-      setShowTeacher(!newShowTeacherValue);
-    });
-  };
-  const months = [
-    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
-  ];
-  const years = Array.from({ length: 11 }, (_, index) => new Date().getFullYear() - 5 + index);
+  const [semesters, setSemesters] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+  const [showShiftSection, setShowShiftSection] = useState(false);
+  const [userRole, setUserRole] = useState('');
+  const [createShiftModalOpen, setCreateShiftModalOpen] = useState(false);
+  const [updateSemesterModalOpen, setUpdateSemesterModalOpen] = useState(false);
+
   useEffect(() => {
-    const days = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    setDaysInMonth(days);
+    const role = sessionStorage.getItem('role');
+    if (role) {
+      setUserRole(role);
+    }
+  }, []);
 
-    getShiftsByMonthForDean(selectedYear, selectedMonth + 1).then((data) => {
-      const groupedShifts = data.reduce((acc, shift) => {
-        const day = new Date(shift.date).getDate();
-        if (!acc[day]) acc[day] = [];
-        acc[day].push(shift);
-        return acc;
-      }, {});
-      setShifts(groupedShifts);
+  useEffect(() => {
+    getListSemester().then((data) => {
+      setSemesters(data);
     });
-  }, [selectedMonth, selectedYear]);
+  }, []);
 
-  const handleCreateShift = (day) => {
-    setSelectedDay(day);
-    setShiftModalOpen(true);
+  const handleCreateShiftSubmit = async (shiftData) => {
+    try {
+      console.log('Dữ liệu lịch trực:', shiftData);
+      const response = await secretaryCreateSemesterShift(shiftData);
+      console.log('Phản hồi từ API:', response);
+      alert('Tạo lịch trực thành công!');
+      setCreateShiftModalOpen(false);
+      getListSemester().then((data) => {
+        setSemesters(data);
+      });
+    } catch (error) {
+      console.error('Lỗi khi tạo lịch trực:', error);
+      alert('Có lỗi xảy ra khi tạo lịch trực. Vui lòng thử lại.');
+    }
   };
 
-  const handleShiftSelect = (day, description) => {
-    const month = selectedMonth + 1;
-    const formattedDate = `${selectedYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-
-    if (
-      shifts[day] &&
-      shifts[day].some((shift) => shift.description === description)
-    ) {
-      console.log("Ca trực này đã tồn tại!");
-      return;
+  const handleUpdateSemesterSubmit = async (id, data) => {
+    try {
+      console.log("Gia tri data:", data);
+      const response = await secretaryUpdateSemesterShift(id, data);
+      console.log('Phản hồi từ API:', response);
+      alert('Cập nhật học kỳ thành công!');
+      setUpdateSemesterModalOpen(false);
+      getListSemester().then((data) => {
+        setSemesters(data);
+      });
+    } catch (error) {
+      console.error('Lỗi khi cập nhật học kỳ:', error);
+      alert('Có lỗi xảy ra khi cập nhật học kỳ. Vui lòng thử lại.');
     }
+  };
 
-    console.log("Giá trị date khi gửi lên API", formattedDate);
-    createShift({
-      date: formattedDate,
-      description: description
-    }).then((newShift) => {
-      // setShifts((prevShifts) => {
-      //   const updatedShifts = { ...prevShifts };
-      //   if (!updatedShifts[day]) updatedShifts[day] = [];
-      //   updatedShifts[day].push(newShift);
-      //   return updatedShifts;
-      // });
-      // setShiftModalOpen(false);
-      // window.location.reload();
+  const handleDeleteSemester = async (id) => {
+    try {
+      const response = await secretaryDeleteSemesterShift(id);
+      console.log('Phản hồi từ API:', response);
+      alert('Xóa học kỳ thành công!');
+      getListSemester().then((data) => {
+        setSemesters(data);
+      });
+    } catch (error) {
+      console.error('Lỗi khi xóa học kỳ:', error);
+      alert('Có lỗi xảy ra khi xóa học kỳ. Vui lòng thử lại.');
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSemester) {
+      const startDate = new Date(selectedSemester.start_day);
+      const endDate = new Date(selectedSemester.end_day);
+      const month = startDate.getMonth() + 1;
+      const year = startDate.getFullYear();
+
+      setSelectedMonth(month - 1);
+      setSelectedYear(year);
+
+      getShiftsByMonthForDean(year, month).then((data) => {
+        const groupedShifts = data.reduce((acc, shift) => {
+          const day = new Date(shift.date).getDate();
+          if (!acc[day]) acc[day] = [];
+          acc[day].push(shift);
+          return acc;
+        }, {});
+        setShifts(groupedShifts);
+      });
+    }
+  }, [selectedSemester]);
+
+  useEffect(() => {
+    if (selectedSemester) {
       getShiftsByMonthForDean(selectedYear, selectedMonth + 1).then((data) => {
         const groupedShifts = data.reduce((acc, shift) => {
           const day = new Date(shift.date).getDate();
@@ -174,8 +155,33 @@ const ShiftList = () => {
         }, {});
         setShifts(groupedShifts);
       });
-    });
+    }
+  }, [selectedMonth, selectedYear, selectedSemester]);
+
+  const handleTeacherVisibilityToggle = async () => {
+    if (selectedSemester) {
+      try {
+        const newStatus = selectedSemester.status === 'approve' ? 'approve_not_teacher' : 'approve';
+        const response = newStatus === 'approve' 
+          ? await deanUpdateSemesterApprove(selectedSemester.id, { status: newStatus })
+          : await deanUpdateSemesterApproveNotTeacher(selectedSemester.id, { status: newStatus });
+        
+        console.log('Cập nhật trạng thái thành công:', response);
+        getListSemester().then((data) => {
+          setSemesters(data);
+          setSelectedSemester(data.find(sem => sem.id === selectedSemester.id));
+        });
+      } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái:', error);
+      }
+    }
   };
+
+  const months = [
+    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
+  ];
+  const years = Array.from({ length: 11 }, (_, index) => new Date().getFullYear() - 5 + index);
 
   const handleShowSchedule = (fullDate, description) => {
     setSelectedDay(fullDate);
@@ -185,16 +191,9 @@ const ShiftList = () => {
     setInfoModalOpen(true);
   };
 
-  const handleDeleteShift = (shiftId) => {
-    deleteShift(shiftId).then(() => {
-      setShifts((prevShifts) => {
-        const updatedShifts = { ...prevShifts };
-        for (const day in updatedShifts) {
-          updatedShifts[day] = updatedShifts[day].filter((s) => s.id !== shiftId);
-        }
-        return updatedShifts;
-      });
-    });
+  const handleBackToSemesterList = () => {
+    setSelectedSemester(null);
+    setShowShiftSection(false);
   };
 
   useEffect(() => {
@@ -210,81 +209,288 @@ const ShiftList = () => {
     };
   }, []);
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Đang chờ';
+      case 'approve':
+      case 'approve_not_teacher':
+        return 'Phê duyệt';
+      case 'refuse':
+        return 'Từ chối';
+      default:
+        return status;
+    }
+  };
+
+  const getWeeksInMonth = (year, month) => {
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    const weeks = [];
+    let week = [];
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      week.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      week.push(day);
+      if (week.length === 7) {
+        weeks.push(week);
+        week = [];
+      }
+    }
+
+    if (week.length > 0) {
+      while (week.length < 7) {
+        week.push(null);
+      }
+      weeks.push(week);
+    }
+
+    return weeks;
+  };
+
+  const weeks = getWeeksInMonth(selectedYear, selectedMonth);
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách ca trực</h1>
-
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <select
-            className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-          >
-            {months.map((month, index) => (
-              <option key={index} value={index}>{month}</option>
-            ))}
-          </select>
-          <select
-            className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+      {!showShiftSection && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách học kỳ</h1>
+          {userRole === 'secretary' && (
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded mb-4"
+              onClick={() => setCreateShiftModalOpen(true)}
+            >
+              Tạo lịch trực
+              
+            </button>
+          )}
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b">Học kỳ</th>
+                <th className="py-2 px-4 border-b">Năm học</th>
+                <th className="py-2 px-4 border-b">Ngày bắt đầu</th>
+                <th className="py-2 px-4 border-b">Ngày kết thúc</th>
+                <th className="py-2 px-4 border-b">Trạng thái</th>
+                <th className="py-2 px-4 border-b">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody>
+              {semesters.map((semester) => (
+                <tr key={semester.id}>
+                  <td className="py-2 px-4 border-b text-center">{semester.id_semester}</td>
+                  <td className="py-2 px-4 border-b text-center">{semester.school_year}</td>
+                  <td className="py-2 px-4 border-b text-center">{semester.start_day}</td>
+                  <td className="py-2 px-4 border-b text-center">{semester.end_day}</td>
+                  <td className="py-2 px-4 border-b text-center">{getStatusText(semester.status)}</td>
+                  <td className="py-2 px-4 border-b text-center">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
+                      onClick={() => {
+                        setSelectedSemester(semester);
+                        setShowShiftSection(true);
+                      }}
+                    >
+                      Chi tiết
+                    </button>
+                    <button
+                          className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded ml-2"
+                          onClick={() => handleDeleteSemester(semester.id)}
+                        >
+                          Xóa
+                        </button>
+                    {semester.status === 'pending' && userRole === 'dean' && (
+                      <>
+                        <button
+                          className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded ml-2"
+                          onClick={async () => {
+                            try {
+                              const response = await deanUpdateSemesterApprove(semester.id, { status: 'approve' });
+                              console.log('Phê duyệt thành công:', response);
+                              getListSemester().then((data) => {
+                                setSemesters(data);
+                              });
+                            } catch (error) {
+                              console.error('Lỗi khi phê duyệt:', error);
+                            }
+                          }}
+                        >
+                          Phê duyệt
+                        </button>
+                        <button
+                          className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded ml-2"
+                          onClick={async () => {
+                            try {
+                              const response = await deanUpdateSemesterRefuse(semester.id, { status: 'refuse' });
+                              console.log('Từ chối thành công:', response);
+                              getListSemester().then((data) => {
+                                setSemesters(data);
+                              });
+                            } catch (error) {
+                              console.error('Lỗi khi từ chối:', error);
+                            }
+                          }}
+                        >
+                          Từ chối
+                        </button>
+                      </>
+                    )}
+                    {semester.status === 'pending' && userRole === 'secretary' && (
+                      <>
+                        <button
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded ml-2"
+                          onClick={() => {
+                            setSelectedSemester(semester);
+                            setUpdateSemesterModalOpen(true);
+                          }}
+                        >
+                          Chỉnh sửa
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700">Ẩn/Hiện Ca Trực Cho Giảng Viên</span>
-          <div
-            className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer 
-              ${showTeacher ? 'bg-green-500' : 'bg-red-500'}`}
-            onClick={handleTeacherVisibilityToggle}
+      )}
+
+      {showShiftSection && selectedSemester && (
+        <>
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách ca trực</h1>
+          <button
+            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded mb-4"
+            onClick={handleBackToSemesterList}
           >
-            <div 
-              className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 
-                          ${showTeacher ? 'translate-x-6' : ''}`}
-            />
+            Quay lại
+          </button>
+
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-4">
+              <select
+                className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              >
+                {months.map((month, index) => (
+                  <option key={index} value={index}>{month}</option>
+                ))}
+              </select>
+              <select
+                className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Đóng/Mở Đăng Ký</span>
+              <div
+                className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer 
+                  ${selectedSemester.status === 'approve' ? 'bg-green-500' : 'bg-red-500'}`}
+                onClick={handleTeacherVisibilityToggle}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 
+                              ${selectedSemester.status === 'approve' ? 'translate-x-6' : ''}`}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {[...Array(daysInMonth)].map((_, index) => {
-          const day = index + 1;
-          const shiftData = shifts[day] || [];
-          const fullDate = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+          <div className="mb-6 bg-white p-4 rounded-lg shadow-md border border-gray-200">
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-20 h-6 bg-blue-100 rounded-lg"></div>
+                <span className="text-sm font-semibold text-gray-700">Ca sáng:</span>
+                <span className="text-sm text-gray-600">{`${selectedSemester.time_start_shift_1} - ${selectedSemester.time_end_shift_1}`}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-20 h-6 bg-red-100 rounded-lg"></div> 
+                <span className="text-sm font-semibold text-gray-700">Ca chiều:</span>
+                <span className="text-sm text-gray-600">{`${selectedSemester.time_start_shift_2} - ${selectedSemester.time_end_shift_2}`}</span>
+              </div>
+            </div>
+          </div>
 
+          <div className="grid grid-cols-7 gap-2">
+            {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day, index) => (
+              <div
+                key={index}
+                className="text-center font-bold text-gray-700 bg-gray-200 p-2 rounded-lg"
+              >
+                {day}
+              </div>
+            ))}
 
-          return (
-            <ShiftCard
-              key={day}
-              day={day}
-              shifts={shiftData}
-              onCreate={handleCreateShift}
-              onDelete={handleDeleteShift}
-              onShowSchedule={handleShowSchedule}
-              fullDate={fullDate}
-            />
-          );
-        })}
-      </div>
+            {weeks.map((week, weekIndex) => (
+              <React.Fragment key={weekIndex}>
+                {week.map((day, dayIndex) => {
+                  if (day === null) {
+                    return (
+                      <div
+                        key={`blank-${dayIndex}`}
+                        className="bg-transparent"
+                      />
+                    );
+                  }
 
-      <ShiftModal
-        isOpen={shiftModalOpen}
-        onClose={() => setShiftModalOpen(false)}
-        onSelect={handleShiftSelect}
-        day={selectedDay}
-      />
+                  const shiftData = shifts[day] || [];
+                  const fullDate = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
+                  return (
+                    <div
+                      key={day}
+                      className="p-3 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-all"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {day}
+                        </span>
+                      </div>
+                      <ShiftCard
+                        day={day}
+                        shifts={shiftData}
+                        onShowSchedule={handleShowSchedule}
+                        fullDate={fullDate}
+                      />
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
+
       <InfoSchedule
         isOpen={infoModalOpen}
         onClose={() => setInfoModalOpen(false)}
         day={selectedDay}
         description={selectedDescription}
       />
+      <CreateShiftModal
+        isOpen={createShiftModalOpen}
+        onClose={() => setCreateShiftModalOpen(false)}
+        onSubmit={handleCreateShiftSubmit}
+      />
+      <UpdateSemesterModal
+        isOpen={updateSemesterModalOpen}
+        onClose={() => setUpdateSemesterModalOpen(false)}
+        onSubmit={handleUpdateSemesterSubmit}
+        semester={selectedSemester}
+      />
     </div>
   );
 };
 
-export default ShiftList;
+export default ShiftList; 

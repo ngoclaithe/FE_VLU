@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { descriptionToTime } from '../../services/shiftUtils';
 import ShiftContextMenu from './ShiftContextMenu';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,16 +18,18 @@ const ShiftCard = ({ day, shifts, fullDate, onRightClick }) => {
 
   const handleRightClick = (e, shift) => {
     e.preventDefault();
-    if (activeContextMenu === shift.id) {
-      setActiveContextMenu(null);
-    } else {
-      setActiveContextMenu(shift.id);
-      setSelectedShift({...shift, day, fullDate});
-      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    if (shift.note === 'success') {
+      if (activeContextMenu === shift.id) {
+        setActiveContextMenu(null);
+      } else {
+        setActiveContextMenu(shift.id);
+        setSelectedShift({ ...shift, day, fullDate });
+        setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      }
     }
   };
 
-  const handleContextMenuAction = (shift, actionType) => {
+  const handleContextMenuAction = (shift) => {
     onRightClick(shift);
     setActiveContextMenu(null);
   };
@@ -36,7 +37,7 @@ const ShiftCard = ({ day, shifts, fullDate, onRightClick }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (e.target.closest('.context-menu') === null) {
-        setActiveContextMenu(null); 
+        setActiveContextMenu(null);
       }
     };
 
@@ -46,37 +47,43 @@ const ShiftCard = ({ day, shifts, fullDate, onRightClick }) => {
     };
   }, []);
 
+  const shiftsToDisplay = [
+    shifts.find(shift => shift.description === '1'),
+    shifts.find(shift => shift.description === '2')
+  ];
+
   return (
     <div
-      className="bg-green-100 shadow-lg rounded-lg p-4 border border-gray-200 flex flex-col relative min-h-[200px] hover:bg-gray-50 transition-all duration-300"
+      className="bg-white shadow-lg rounded-lg p-4 border border-gray-200 flex flex-col relative min-h-[200px] hover:bg-gray-50 transition-all duration-300"
       onClick={() => setActiveContextMenu(null)}
     >
       <h3 className="text-lg font-semibold text-gray-800 mb-4 truncate">Ngày {day}</h3>
 
       <div className="flex-grow space-y-3 overflow-hidden">
-        {shifts.map((shift) => {
-          const isRegistered = shift.registered;
+        {shiftsToDisplay.map((shift, index) => {
+          const isRegistered = shift?.registered;
           const statusText = isRegistered && shift.note ? noteToStatusText[shift.note] : null;
-          
+
+          const shiftColor = shift?.description === '1' ? 'bg-blue-100' : shift?.description === '2' ? 'bg-red-100' : 'bg-gray-100';
+
           return (
             <div
-              key={shift.id}
-              className={`mb-3 cursor-pointer ${hoveredShift === shift.id ? 'bg-gray-100' : ''}`}
-              onContextMenu={(e) => handleRightClick(e, shift)}
-              onMouseEnter={() => setHoveredShift(shift.id)}
+              key={shift ? shift.id : `empty-${index}`}
+              className={`mb-3 p-3 rounded-lg cursor-pointer ${shiftColor} h-12 flex items-center justify-center ${hoveredShift === shift?.id ? 'bg-opacity-75' : ''}`}
+              onContextMenu={(e) => shift && handleRightClick(e, shift)}
+              onMouseEnter={() => shift && setHoveredShift(shift.id)}
               onMouseLeave={() => setHoveredShift(null)}
             >
               <p className="text-sm text-gray-600 truncate">
-                Ca trực: {descriptionToTime[shift.description] || "Không có thông tin"}
                 {isRegistered && statusText && (
-                  <span 
+                  <span
                     className={`font-bold italic 
-                      ${statusText === 'Đã đăng ký' ? 'text-green-600' : 
-                        statusText === 'Ca muốn nghỉ' ? 'text-blue-600' : 
-                        statusText === 'Ca muốn đổi' ? 'text-yellow-600' : 
-                        statusText === 'Được duyệt nghỉ phép' ? 'text-red-600' : 'text-gray-600'
+                      ${statusText === 'Đã đăng ký' ? 'text-green-600' :
+                        statusText === 'Ca muốn nghỉ' ? 'text-blue-600' :
+                          statusText === 'Ca muốn đổi' ? 'text-yellow-600' :
+                            statusText === 'Được duyệt nghỉ phép' ? 'text-red-600' : 'text-gray-600'
                       }`}
-                  > ({statusText})</span>
+                  >{statusText}</span>
                 )}
               </p>
             </div>
@@ -86,19 +93,18 @@ const ShiftCard = ({ day, shifts, fullDate, onRightClick }) => {
 
       {activeContextMenu && selectedShift && (
         <div
-          className="fixed context-menu z-50" 
+          className="fixed context-menu z-50"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
-            zIndex: 9999, 
+            zIndex: 9999,
           }}
         >
           <ShiftContextMenu
-            shift={{...selectedShift, date: fullDate}}
+            shift={{ ...selectedShift, date: fullDate }}
             position={contextMenuPosition}
-            onRegister={(shift) => handleContextMenuAction(shift, 'register')}
-            onDelete={(shift) => handleContextMenuAction(shift, 'delete')}
-            onClose={() => setActiveContextMenu(null)} 
+            onDelete={(shift) => handleContextMenuAction(shift)}
+            onClose={() => setActiveContextMenu(null)}
           />
         </div>
       )}

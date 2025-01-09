@@ -1,29 +1,45 @@
-import React, { useState, useMemo } from 'react';
-import ShiftCard from '../../components/common/ShiftCard';
-import { useTeacherShifts } from '../../hooks/useTeacherShifts';
-import {
-  teacherRegisterSchedule,
-  leaveSchedule,
-  changeSchedule
-} from '../../services/apiSchedule';
-import { toast, ToastContainer } from 'react-toastify';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { confirmAlert } from 'react-confirm-alert';
-import 'react-confirm-alert/src/react-confirm-alert.css';
+import { getListSemesterForTeacher, registerTeacherSchedule } from '../../services/apiSemester';
+import { showToast } from '../../utils/toast';
+import SemesterList from '../../components/SemesterList';
+import ShiftCalendar from '../../components/ShiftCalendar';
+import ShiftRegisterModal from '../../components/ShiftRegisterModal';
+import ShiftSwapModal from '../../components/ShiftSwapModal';
+import { useTeacherShifts } from '../../hooks/useTeacherShifts';
+import { leaveSchedule, changeSchedule } from '../../services/apiSchedule';
+import ReasonModal from '../../components/ReasonModal'; 
 
 const ShiftListTeacher = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isReasonModalOpen, setIsReasonModalOpen] = useState(false); 
   const [oldShift, setOldShift] = useState(null);
   const [newShift, setNewShift] = useState(null);
+  const [selectedShifts, setSelectedShifts] = useState({});
+  const [semesters, setSemesters] = useState([]);
+  const [showShiftSection, setShowShiftSection] = useState(false);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+  const [selectedShift, setSelectedShift] = useState(null); 
+  const [reason, setReason] = useState(''); 
 
-  const { shifts, daysInMonth, teacherId } = useTeacherShifts(selectedMonth, selectedDate);
+  useEffect(() => {
+    getListSemesterForTeacher().then((data) => {
+      setSemesters(data);
+    });
+  }, []);
+
+  const { shifts, daysInMonth, teacherId } = useTeacherShifts(selectedMonth, selectedYear);
 
   const months = [
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
     'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
   ];
+
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
 
   const registeredShifts = useMemo(() => {
     const allRegisteredShifts = [];
@@ -33,12 +49,12 @@ const ShiftListTeacher = () => {
         .forEach(shift => {
           allRegisteredShifts.push({
             ...shift,
-            fullDate: `${selectedDate.getFullYear()}-${(selectedMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+            fullDate: `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
           });
         });
     });
     return allRegisteredShifts;
-  }, [shifts, selectedMonth, selectedDate]);
+  }, [shifts, selectedMonth, selectedYear]);
 
   const availableShifts = useMemo(() => {
     const allAvailableShifts = [];
@@ -48,73 +64,104 @@ const ShiftListTeacher = () => {
         .forEach(shift => {
           allAvailableShifts.push({
             ...shift,
-            fullDate: `${selectedDate.getFullYear()}-${(selectedMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+            fullDate: `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
           });
         });
     });
     return allAvailableShifts;
-  }, [shifts, selectedMonth, selectedDate]);
+  }, [shifts, selectedMonth, selectedYear]);
+
+  const handleSelectSemester = (semester) => {
+    setSelectedSemester(semester); 
+    setShowShiftSection(true);
+    const startDate = new Date(semester.start_day);
+    setSelectedMonth(startDate.getMonth());
+    setSelectedYear(startDate.getFullYear());
+  };
 
   const handleRightClick = (shift) => {
-    confirmAlert({
-      message: `Xác nhận đồng ý hoặc hủy`,
-      buttons: [
-        {
-          label: 'Đồng ý',
-          onClick: () => {
-            const year = selectedDate.getFullYear();
-            const month = selectedMonth + 1;
-            const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${shift.day.toString().padStart(2, '0')}`;
+    if (shift.note === 'success') {
+      setSelectedShift(shift); 
+      setIsReasonModalOpen(true); 
+    }
+  };
 
-            const apiCall = shift.registered
-              ? leaveSchedule(teacherId, shift.description, formattedDate)
-              : teacherRegisterSchedule(teacherId, shift.description, formattedDate);
+  const handleLeaveSubmit = () => {
+    if (!selectedShift || !reason) {
+      showToast('Vui lòng nhập lý do nghỉ', 'error');
+      return;
+    }
 
-            apiCall.then(() => {
-              toast.success(shift.registered ? 'Xin nghỉ ca thành công!' : 'Đăng ký ca thành công!', {
-                position: "top-right",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                toastId: "success-toast",
-                zIndex: 100,
-              });
-            }).catch(error => {
-              toast.error('Lỗi khi thao tác ca:', error, {
-                position: "top-right",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                toastId: "error-toast",
-                zIndex: 100,
-              });
-            });
-          }
-        },
-        {
-          label: 'Hủy',
-          onClick: () => { }
-        }
-      ]
-    });
+    const year = selectedYear;
+    const month = selectedMonth + 1;
+    const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${selectedShift.day.toString().padStart(2, '0')}`;
+
+    leaveSchedule(teacherId, selectedShift.description, formattedDate, reason)
+      .then(() => {
+        showToast('Xin nghỉ ca thành công!');
+        setIsReasonModalOpen(false); 
+        setReason(''); 
+      })
+      .catch(error => {
+        showToast('Lỗi khi thao tác ca: ' + error.message, 'error');
+      });
   };
 
   const handleSwapShift = () => {
     setIsModalOpen(true);
   };
 
+  const handleRegisterShift = () => {
+    setIsRegisterModalOpen(true);
+  };
+
+  const handleSelectShift = (day, shiftType) => {
+    setSelectedShifts((prev) => {
+      const key = `${day}-${shiftType}`;
+      const newSelectedShifts = { ...prev };
+      if (newSelectedShifts[key]) {
+        delete newSelectedShifts[key];
+      } else {
+        newSelectedShifts[key] = true;
+      }
+      return newSelectedShifts;
+    });
+  };
+
+  const handleSubmitRegister = () => {
+    if (!selectedSemester) {
+      showToast('Vui lòng chọn học kỳ trước khi đăng ký ca trực', 'error');
+      return;
+    }
+  
+    const shiftsToRegister = Object.keys(selectedShifts).reduce((acc, key) => {
+      const [day, shiftType] = key.split('-');
+      const shiftKey = `shift_${shiftType === 'morning' ? 1 : 2}`;
+      if (!acc[day]) acc[day] = {};
+      acc[day][shiftKey] = true;
+      return acc;
+    }, {});
+  
+    console.log("Các ca đã chọn:", shiftsToRegister);
+    console.log("Học kỳ được chọn:", selectedSemester.id);
+  
+    registerTeacherSchedule(teacherId, selectedSemester.id, shiftsToRegister)
+      .then(() => {
+        showToast('Đăng ký ca thành công!');
+        setIsRegisterModalOpen(false);
+        setSelectedShifts({});
+      })
+      .catch((error) => {
+        showToast('Lỗi khi đăng ký ca: ' + error.message, 'error');
+      });
+  
+    setIsRegisterModalOpen(false);
+    setSelectedShifts({});
+  };
+
   const handleSubmitSwap = () => {
     if (!oldShift || !newShift) {
-      toast.error('Vui lòng chọn cả ca cũ và ca mới', {
-        position: "top-right",
-        autoClose: 2000,
-      });
+      showToast('Vui lòng chọn cả ca cũ và ca mới', 'error');
       return;
     }
 
@@ -126,33 +173,13 @@ const ShiftListTeacher = () => {
       newShift.fullDate
     )
       .then(() => {
-        toast.success('Đã gửi yêu cầu đổi ca!', {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          toastId: "success-toast",
-          zIndex: 100,
-        });
+        showToast('Đã gửi yêu cầu đổi ca!');
         setIsModalOpen(false);
         setOldShift(null);
         setNewShift(null);
       })
       .catch((error) => {
-        toast.error('Lỗi khi đổi ca:', error, {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          toastId: "error-toast",
-          zIndex: 100,
-        });
+        showToast('Lỗi khi đổi ca: ' + error.message, 'error');
       });
   };
 
@@ -160,110 +187,111 @@ const ShiftListTeacher = () => {
     <>
       <ToastContainer />
       <div className="p-6 bg-gray-100 min-h-screen">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách ca trực</h1>
-
-        <div className="flex justify-between items-center mb-6">
-          <select
-            className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-          >
-            {months.map((month, index) => (
-              <option key={index} value={index}>{month}</option>
-            ))}
-          </select>
-
-          <button
-            className="bg-blue-500 text-white p-2 rounded-lg shadow-sm"
-            onClick={handleSwapShift}
-          >
-            Xin đổi ca trực
-          </button>
-        </div>
-
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-              <h2 className="text-xl font-bold mb-4">Đổi ca trực</h2>
-
-              <div className="mb-4">
-                <label className="block mb-2">Chọn ca cũ</label>
+        {!showShiftSection ? (
+          <SemesterList semesters={semesters} onSelectSemester={handleSelectSemester} />
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách ca trực</h1>
+            <button
+              className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded mb-4"
+              onClick={() => setShowShiftSection(false)}
+            >
+              Quay lại
+            </button>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex gap-4">
                 <select
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={oldShift ? JSON.stringify(oldShift) : ''}
-                  onChange={(e) => setOldShift(e.target.value ? JSON.parse(e.target.value) : null)}
+                  className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                 >
-                  <option value="">Chọn ca cũ</option>
-                  {registeredShifts
-                    .filter(shift => shift.note === 'success')
-                    .map((shift, index) => (
-                      <option
-                        key={index}
-                        value={JSON.stringify(shift)}
-                      >
-                        Ca {`${shift.description} - Ngày ${shift.fullDate}`}
-                      </option>
-                    ))}
+                  {months.map((month, index) => (
+                    <option key={index} value={index}>{month}</option>
+                  ))}
                 </select>
-              </div>
 
-              <div className="mb-4">
-                <label className="block mb-2">Chọn ca mới</label>
                 <select
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={newShift ? JSON.stringify(newShift) : ''}
-                  onChange={(e) => setNewShift(e.target.value ? JSON.parse(e.target.value) : null)}
+                  className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 >
-                  <option value="">Chọn ca mới</option>
-                  {availableShifts.map((shift, index) => (
-                    <option
-                      key={index}
-                      value={JSON.stringify(shift)}
-                    >
-                      Ca {`${shift.description} - Ngày ${shift.fullDate}`}
-                    </option>
+                  {years.map((year, index) => (
+                    <option key={index} value={year}>{year}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex gap-4">
                 <button
-                  className="bg-blue-500 text-white p-2 rounded-lg"
-                  onClick={handleSubmitSwap}
+                  className="bg-blue-500 text-white p-2 rounded-lg shadow-sm hover:bg-blue-600 transition-all"
+                  onClick={handleSwapShift}
                 >
-                  Xác nhận đổi ca
+                  Xin đổi ca trực
                 </button>
-                <button
-                  className="bg-gray-500 text-white p-2 rounded-lg ml-2"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setOldShift(null);
-                    setNewShift(null);
-                  }}
-                >
-                  Hủy
-                </button>
+                {selectedSemester?.status !== "approve_not_teacher" && (
+                  <button
+                    className="bg-green-500 text-white p-2 rounded-lg shadow-sm hover:bg-green-600 transition-all"
+                    onClick={handleRegisterShift}
+                  >
+                    Đăng ký ca trực
+                  </button>
+                )}
               </div>
             </div>
-          </div>
-        )}
+            <div className="mb-6 bg-white p-4 rounded-lg shadow-md border border-gray-200">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-20 h-6 bg-blue-100 rounded-lg"></div>
+                  <span className="text-sm font-semibold text-gray-700">Ca sáng:</span>
+                  <span className="text-sm text-gray-600">{`${selectedSemester.time_start_shift_1} - ${selectedSemester.time_end_shift_1}`}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-20 h-6 bg-red-100 rounded-lg"></div> 
+                  <span className="text-sm font-semibold text-gray-700">Ca chiều:</span>
+                  <span className="text-sm text-gray-600">{`${selectedSemester.time_start_shift_2} - ${selectedSemester.time_end_shift_2}`}</span>
+                </div>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(daysInMonth)].map((_, index) => {
-            const day = index + 1;
-            const fullDate = `${selectedDate.getFullYear()}-${(selectedMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-            const dayShifts = shifts[day] || [];
-            return (
-              <ShiftCard
-                key={day}
-                day={day}
-                shifts={dayShifts}
-                fullDate={fullDate}
-                onRightClick={handleRightClick}
-              />
-            );
-          })}
-        </div>
+            <ShiftCalendar
+              shifts={shifts}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              daysInMonth={daysInMonth}
+              isCurrentMonth={selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear()}
+              currentDate={new Date()}
+              onRightClick={handleRightClick}
+            />
+
+            <ShiftRegisterModal
+              isOpen={isRegisterModalOpen}
+              onClose={() => setIsRegisterModalOpen(false)}
+              selectedShifts={selectedShifts}
+              onSelectShift={handleSelectShift}
+              onSubmitRegister={handleSubmitRegister}
+            />
+
+            <ShiftSwapModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              oldShift={oldShift}
+              newShift={newShift}
+              setOldShift={setOldShift}
+              setNewShift={setNewShift}
+              registeredShifts={registeredShifts}
+              availableShifts={availableShifts}
+              onSubmitSwap={handleSubmitSwap}
+            />
+
+            <ReasonModal
+              isOpen={isReasonModalOpen}
+              onClose={() => setIsReasonModalOpen(false)}
+              onSubmit={handleLeaveSubmit}
+              reason={reason}
+              setReason={setReason}
+            />
+          </>
+        )}
       </div>
     </>
   );

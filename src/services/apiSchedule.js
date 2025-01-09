@@ -93,11 +93,11 @@ export const changeSchedule = async (teacherId, descriptionold, dateold, descrip
         throw error;
     }
 };
-export const leaveSchedule = async (teacherId, description, date) => {
+export const leaveSchedule = async (teacherId, description, date, reason) => {
     try {
-        await apiClient.put(`/schedules/leave_by_teacher/${teacherId}/${description}/${date}`);
+        await apiClient.put(`/schedules/leave_by_teacher/${teacherId}/${description}/${date}`, { reason });
     } catch (error) {
-        console.error('Error deleting schedule:', error);
+        console.error('Error leaving schedule:', error);
         throw error;
     }
 };

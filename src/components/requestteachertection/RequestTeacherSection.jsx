@@ -79,6 +79,15 @@ const RequestTeacherSection = () => {
       }
   };
 
+  const handleReason = (shift) => {
+    if (shift.teachers.length > 0) {
+      const teacher = shift.teachers[0];
+      toast.info(`Lý do: ${teacher.detail_reason || "Không có chi tiết lý do."}`);
+    } else {
+      toast.info("Không có lý do được cung cấp.");
+    }
+  };
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Kiểm tra yêu cầu giáo viên</h2>
@@ -181,9 +190,15 @@ const RequestTeacherSection = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(shift.shift_id, shift)}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mr-2"
                     >
                       Từ chối
+                    </button>
+                    <button
+                      onClick={() => handleReason(shift)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                      Lý do
                     </button>
                   </td>
                 </tr>

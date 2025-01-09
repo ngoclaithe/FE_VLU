@@ -7,7 +7,7 @@ import {
   } from '../services/apiShift';
 import { getTeacherIdByEmail } from '../services/apiAuth';
 
-export const useTeacherShifts = (selectedMonth, selectedDate) => {
+export const useTeacherShifts = (selectedMonth, selectedYear) => {
   const [shifts, setShifts] = useState([]);
   const [daysInMonth, setDaysInMonth] = useState(30);
   const [teacherId, setTeacherId] = useState(null);
@@ -25,16 +25,14 @@ export const useTeacherShifts = (selectedMonth, selectedDate) => {
 
   useEffect(() => {
     if (!teacherId) return;
-
-    const year = selectedDate.getFullYear();
-    const days = new Date(year, selectedMonth + 1, 0).getDate();
+    const days = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     setDaysInMonth(days);
 
     const month = (selectedMonth + 1).toString().padStart(2, '0');
-    const yearMonth = `${year}-${month}`;
+    const yearMonth = `${selectedYear}-${month}`;
 
     Promise.all([
-      getShiftsByMonth(year, selectedMonth + 1),
+      getShiftsByMonth(selectedYear, selectedMonth + 1),
       getSchedulesByMonth(teacherId, yearMonth)
     ])
     .then(([shiftsData, schedulesData]) => {
@@ -71,7 +69,7 @@ export const useTeacherShifts = (selectedMonth, selectedDate) => {
       setShifts(updatedShifts);
     })
     .catch(error => console.error('Lỗi khi lấy dữ liệu:', error));
-  }, [selectedMonth, selectedDate, teacherId]);
+  }, [selectedMonth, selectedYear, teacherId]);
 
   return { shifts, daysInMonth, teacherId };
 };

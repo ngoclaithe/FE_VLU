@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const apiClient = axios.create({
-    baseURL: "http://localhost:8000", 
-    headers: {
-        "Content-Type": "application/json"
-    },
-});
+import apiClient from './apiClient';
 
 export const getAllShifts = async (skip = 0, limit = 100) => {
     try {
